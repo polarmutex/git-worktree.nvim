@@ -28,11 +28,11 @@ end
 local toggle_forced_deletion = function()
     -- redraw otherwise the message is not displayed when in insert mode
     if force_next_deletion then
-        print('The next deletion will not be forced')
-        vim.fn.execute('redraw')
+        print("The next deletion will not be forced")
+        vim.fn.execute("redraw")
     else
-        print('The next deletion will be forced')
-        vim.fn.execute('redraw')
+        print("The next deletion will be forced")
+        vim.fn.execute("redraw")
         force_next_deletion = true
     end
 end
@@ -76,15 +76,14 @@ local delete_worktree = function(prompt_bufnr)
     local worktree_path = get_worktree_path(prompt_bufnr)
     actions.close(prompt_bufnr)
     if worktree_path ~= nil then
-       git_worktree.delete_worktree(worktree_path, force_next_deletion, {
-           on_failure = delete_failure_handler,
-           on_success = delete_success_handler
-       })
+        git_worktree.delete_worktree(worktree_path, force_next_deletion, {
+            on_failure = delete_failure_handler,
+            on_success = delete_success_handler,
+        })
     end
 end
 
 local create_input_prompt = function(cb)
-
     --[[
     local window = Window.centered({
         width = 30,
@@ -112,27 +111,25 @@ end
 local create_worktree = function(opts)
     opts = opts or {}
     opts.attach_mappings = function()
-        actions.select_default:replace(
-            function(prompt_bufnr, _)
-                local selected_entry = action_state.get_selected_entry()
-                local current_line = action_state.get_current_line()
+        actions.select_default:replace(function(prompt_bufnr, _)
+            local selected_entry = action_state.get_selected_entry()
+            local current_line = action_state.get_current_line()
 
-                actions.close(prompt_bufnr)
+            actions.close(prompt_bufnr)
 
-                local branch = selected_entry ~= nil and
-                    selected_entry.value or current_line
+            local branch = selected_entry ~= nil and selected_entry.value or current_line
 
-                if branch == nil then
-                    return
+            if branch == nil then
+                return
+            end
+
+            create_input_prompt(function(name)
+                if name == "" then
+                    name = branch
                 end
-
-                create_input_prompt(function(name)
-                    if name == "" then
-                        name = branch
-                    end
-                    git_worktree.create_worktree(name, branch)
-                end)
+                git_worktree.create_worktree(name, branch)
             end)
+        end)
 
         -- do we need to replace other default maps?
 
@@ -143,12 +140,12 @@ end
 
 local telescope_git_worktree = function(opts)
     opts = opts or {}
-    local output = utils.get_os_command_output({"git", "worktree", "list"})
+    local output = utils.get_os_command_output({ "git", "worktree", "list" })
     local results = {}
     local widths = {
         path = 0,
         sha = 0,
-        branch = 0
+        branch = 0,
     }
 
     local parse_line = function(line)
@@ -162,7 +159,7 @@ local telescope_git_worktree = function(opts)
         if entry.sha ~= "(bare)" then
             local index = #results + 1
             for key, val in pairs(widths) do
-                if key == 'path' then
+                if key == "path" then
                     local new_path = utils.transform_path(opts, entry[key])
                     local path_len = strings.strdisplaywidth(new_path or "")
                     widths[key] = math.max(val, path_len)
@@ -183,53 +180,54 @@ local telescope_git_worktree = function(opts)
         return
     end
 
-    local displayer = require("telescope.pickers.entry_display").create {
+    local displayer = require("telescope.pickers.entry_display").create({
         separator = " ",
         items = {
             { width = widths.branch },
             { width = widths.path },
             { width = widths.sha },
         },
-    }
+    })
 
     local make_display = function(entry)
-        return displayer {
+        return displayer({
             { entry.branch, "TelescopeResultsIdentifier" },
-            { utils.transform_path(opts, entry.path) },
-            { entry.sha },
-        }
+            { utils.transform_path(opts, entry.path), "TelescopeResultsComment" },
+            { entry.sha, "TelescopeResultsNumber" },
+        })
     end
 
-    pickers.new(opts or {}, {
-        prompt_title = "Git Worktrees",
-        finder = finders.new_table {
-            results = results,
-            entry_maker = function(entry)
-                entry.value = entry.branch
-                entry.ordinal = entry.branch
-                entry.display = make_display
-                return entry
+    pickers
+        .new(opts or {}, {
+            prompt_title = "Git Worktrees",
+            finder = finders.new_table({
+                results = results,
+                entry_maker = function(entry)
+                    entry.value = entry.branch
+                    entry.ordinal = entry.branch
+                    entry.display = make_display
+                    return entry
+                end,
+            }),
+            sorter = conf.generic_sorter(opts),
+            attach_mappings = function(_, map)
+                action_set.select:replace(switch_worktree)
+
+                map("i", "<c-d>", delete_worktree)
+                map("n", "<c-d>", delete_worktree)
+                map("i", "<c-f>", toggle_forced_deletion)
+                map("n", "<c-f>", toggle_forced_deletion)
+
+                return true
             end,
-        },
-        sorter = conf.generic_sorter(opts),
-        attach_mappings = function(_, map)
-            action_set.select:replace(switch_worktree)
-
-            map("i", "<c-d>", delete_worktree)
-            map("n", "<c-d>", delete_worktree)
-            map("i", "<c-f>", toggle_forced_deletion)
-            map("n", "<c-f>", toggle_forced_deletion)
-
-            return true
-        end
-    }):find()
+        })
+        :find()
 end
 
-return require("telescope").register_extension(
-           {
-        exports = {
-            git_worktree = telescope_git_worktree,
-            git_worktrees = telescope_git_worktree,
-            create_git_worktree = create_worktree
-        }
-    })
+return require("telescope").register_extension({
+    exports = {
+        git_worktree = telescope_git_worktree,
+        git_worktrees = telescope_git_worktree,
+        create_git_worktree = create_worktree,
+    },
+})
