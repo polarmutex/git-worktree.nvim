@@ -135,8 +135,8 @@ local telescope_git_worktree = function(opts)
     local make_display = function(entry)
         return displayer {
             { entry.branch, 'TelescopeResultsIdentifier' },
-            { utils.transform_path(opts, entry.path) },
-            { entry.sha },
+            { utils.transform_path(opts, entry.path), 'TelescopeResultsComment' },
+            { entry.sha, 'TelescopeResultsNumber' },
         }
     end
 
