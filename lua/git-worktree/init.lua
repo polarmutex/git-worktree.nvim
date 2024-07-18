@@ -7,6 +7,14 @@
 ---
 ---@mod git-worktree
 
+---@mod git-worktree.telescope
+---@brief [[
+--- To get telescope-file-browser loaded and working with telescope,
+--- you need to call load_extension, somewhere after setup function:
+--- <code>
+--- require("telescope").load_extension("git_worktree")
+---@brief ]]
+
 ---@brief [[
 ---@brief ]]
 
