@@ -7,6 +7,7 @@ local action_set = require('telescope.actions.set')
 local action_state = require('telescope.actions.state')
 local conf = require('telescope.config').values
 local git_worktree = require('git-worktree')
+local Config = require('git-worktree.config')
 
 local force_next_deletion = false
 
@@ -70,7 +71,7 @@ end
 -- @param forcing boolean: whether the deletion is forced
 -- @return boolean: whether the deletion is confirmed
 local confirm_deletion = function(forcing)
-    if not git_worktree._config.confirm_telescope_deletions then
+    if not Config.confirm_telescope_deletions then
         return true
     end
 
