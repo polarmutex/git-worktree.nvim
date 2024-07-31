@@ -59,15 +59,14 @@ local Path = require('plenary.path')
 M.builtins = {
     ---@type git-worktree.hooks.cb.switch
     update_current_buffer_on_switch = function(_, prev_path)
+        local config = require('git-worktree.config')
         if prev_path == nil then
-            local config = require('git-worktree.config').get()
             vim.cmd(config.update_on_change_command)
         end
 
         local cwd = vim.loop.cwd()
         local current_buf_name = vim.api.nvim_buf_get_name(0)
         if not current_buf_name or current_buf_name == '' then
-            local config = require('git-worktree.config').get()
             vim.cmd(config.update_on_change_command)
         end
 
@@ -79,7 +78,6 @@ M.builtins = {
 
         local start, fin = string.find(name, prev_path, 1, true)
         if start == nil then
-            local config = require('git-worktree.config').get()
             vim.cmd(config.update_on_change_command)
         end
 
@@ -88,7 +86,6 @@ M.builtins = {
         local final_path = Path:new({ cwd, local_name }):absolute()
 
         if not Path:new(final_path):exists() then
-            local config = require('git-worktree.config').get()
             vim.cmd(config.update_on_change_command)
         end
 
