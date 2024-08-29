@@ -39,7 +39,24 @@ This plugin is [available on LuaRocks][luarocks-url]:
 
 ## Quick Setup
 
-This plugin does not require to call setup function
+This plugin does not require to call setup function, but you should setup your default hooks
+
+Example Hook configuration
+
+```lua
+local Hooks = require("git-worktree.hooks")
+local config = require('git-worktree.config')
+local update_on_switch = Hooks.builtins.update_current_buffer_on_switch
+
+Hooks.register(Hooks.type.SWITCH, function (path, prev_path)
+	vim.notify("Moved from " .. prev_path .. " to " .. path)
+	update_on_switch(path, prev_path)
+end)
+
+Hooks.register(Hooks.type.DELETE, function ()
+	vim.cmd(config.update_on_change_command)
+end)
+```
 
 ## Features
 
