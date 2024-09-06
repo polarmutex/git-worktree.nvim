@@ -106,8 +106,9 @@ end
 -- Create a prompt to get the path of the new worktree
 -- @param cb function: the callback to call with the path
 -- @return nil
-local create_input_prompt = function(cb)
-    local subtree = vim.fn.input('Path to subtree > ')
+local create_input_prompt = function(cb, name, prefix)
+    prefix = prefix or ''
+    local subtree = vim.fn.input('Path to subtree > ', prefix .. name)
     cb(subtree)
 end
 
@@ -134,7 +135,7 @@ local create_worktree = function(opts)
                     name = branch
                 end
                 git_worktree.create_worktree(name, branch)
-            end)
+            end, branch, opts.prefix)
         end)
 
         return true
