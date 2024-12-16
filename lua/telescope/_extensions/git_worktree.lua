@@ -232,7 +232,7 @@ end
 -- @return nil
 local telescope_git_worktree = function(opts)
     opts = opts or {}
-    local output = utils.get_os_command_output { 'git', 'worktree', 'list' }
+    local output = utils.get_os_command_output { 'git', 'worktree', 'list', '--porcelain' }
     local results = {}
     local widths = {
         path = 0,
@@ -240,31 +240,45 @@ local telescope_git_worktree = function(opts)
         branch = 0,
     }
 
-    local parse_line = function(line)
-        local fields = vim.split(string.gsub(line, '%s+', ' '), ' ')
-        local entry = {
-            path = fields[1],
-            sha = fields[2],
-            branch = fields[3],
-        }
+    -- if within a worktree, the base repo dir is seen
+    -- as the main worktree with a sha but should not be shown
+    local root = Git.gitroot_dir()
 
-        if entry.sha ~= '(bare)' then
-            local index = #results + 1
-            for key, val in pairs(widths) do
-                if key == 'path' then
-                    local path_len = strings.strdisplaywidth(entry[key] or '')
-                    widths[key] = math.max(val, path_len)
-                else
-                    widths[key] = math.max(val, strings.strdisplaywidth(entry[key] or ''))
-                end
-            end
-
-            table.insert(results, index, entry)
-        end
-    end
-
+    local entry = {}
+    local index = 1
     for _, line in ipairs(output) do
-        parse_line(line)
+        if line == '' and entry.sha ~= nil then
+            if entry.path ~= root then
+                for key, val in pairs(widths) do
+                    if key == 'path' then
+                        local path_len = strings.strdisplaywidth(entry[key] or '')
+                        widths[key] = math.max(val, path_len)
+                    else
+                        widths[key] = math.max(val, strings.strdisplaywidth(entry[key] or ''))
+                    end
+                end
+                table.insert(results, index, entry)
+                index = index + 1
+            end
+            entry = {}
+        else
+            local path = string.match(line, '^worktree%s+(.+)$')
+            if path then
+                entry.path = path
+            end
+            local sha = string.match(line, '^HEAD%s+(.+)$')
+            if sha then
+                entry.sha = sha
+            end
+            local branch = string.match(line, '^branch refs/heads/(.+)$')
+            if branch then
+                entry.branch = branch
+            end
+            local detached = string.match(line, '^detached$')
+            if detached then
+                entry.branch = detached
+            end
+        end
     end
 
     -- if #results == 0 then
