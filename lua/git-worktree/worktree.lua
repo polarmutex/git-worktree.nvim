@@ -14,15 +14,6 @@ local function get_absolute_path(path)
 end
 
 local function change_dirs(path)
-    if path == nil then
-        local out = vim.fn.systemlist('git rev-parse --git-common-dir')
-        if vim.v.shell_error ~= 0 then
-            Log.error('Could not parse common dir')
-            return
-        end
-        path = out[1]
-    end
-
     Log.info('changing dirs:  %s ', path)
     local worktree_path = get_absolute_path(path)
     local previous_worktree = vim.loop.cwd()
@@ -72,24 +63,20 @@ local M = {}
 --Switch the current worktree
 ---@param path string?
 function M.switch(path)
-    if path == nil then
-        change_dirs(path)
-    else
-        if path == vim.loop.cwd() then
+    if path == vim.loop.cwd() then
+        return
+    end
+    Git.has_worktree(path, nil, function(found)
+        if not found then
+            Log.error('Worktree does not exists, please create it first %s ', path)
             return
         end
-        Git.has_worktree(path, nil, function(found)
-            if not found then
-                Log.error('Worktree does not exists, please create it first %s ', path)
-                return
-            end
 
-            vim.schedule(function()
-                local prev_path = change_dirs(path)
-                Hooks.emit(Hooks.type.SWITCH, path, prev_path)
-            end)
+        vim.schedule(function()
+            local prev_path = change_dirs(path)
+            Hooks.emit(Hooks.type.SWITCH, path, prev_path)
         end)
-    end
+    end)
 end
 
 --- CREATE ---

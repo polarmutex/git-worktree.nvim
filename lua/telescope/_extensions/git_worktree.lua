@@ -18,9 +18,6 @@ local force_next_deletion = false
 -- @return string: the path of the selected worktree
 local get_worktree_path = function(prompt_bufnr)
     local selection = action_state.get_selected_entry(prompt_bufnr)
-    if selection == nil then
-        return
-    end
     return selection.path
 end
 
@@ -118,12 +115,14 @@ local delete_worktree = function(prompt_bufnr)
         return
     end
 
-    git_worktree.switch_worktree(nil)
-
-    local worktree_path = get_worktree_path(prompt_bufnr)
+    local selected = get_worktree_path(prompt_bufnr)
     actions.close(prompt_bufnr)
-    if worktree_path ~= nil then
-        git_worktree.delete_worktree(worktree_path, force_next_deletion, {
+    if selected ~= nil then
+        local current = vim.loop.cwd()
+        if current == selected then
+            git_worktree.switch_worktree(Git.gitroot_dir())
+        end
+        git_worktree.delete_worktree(selected, force_next_deletion, {
             on_failure = delete_failure_handler,
             on_success = delete_success_handler,
         })
@@ -137,8 +136,7 @@ local create_input_prompt = function(opts, cb)
     opts = opts or {}
     opts.pattern = nil -- show all branches that can be tracked
 
-    local prefix = opts.prefix or ''
-    local path = vim.fn.input('Path to subtree > ', prefix .. opts.branch)
+    local path = vim.fn.input('Path to subtree > ', Git.gitroot_dir() .. '/' .. opts.branch)
     if path == '' then
         Log.error('No worktree path provided')
         return
@@ -184,7 +182,6 @@ end
 -- @param opts table: the options for the telescope picker (optional)
 -- @return nil
 local telescope_create_worktree = function(opts)
-    git_worktree.switch_worktree(nil)
     opts = opts or {}
 
     local create_branch = function(prompt_bufnr, _)
