@@ -153,7 +153,7 @@ function M.create_worktree_job(path, branch, found_branch, upstream, found_upstr
             table.insert(worktree_add_args, branch)
             table.insert(worktree_add_args, path)
 
-            if found_upstream and branch ~= upstream then
+            if found_upstream then
                 table.insert(worktree_add_args, '--track')
                 table.insert(worktree_add_args, upstream)
             end

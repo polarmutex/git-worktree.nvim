@@ -99,13 +99,16 @@ end
 ---@param branch string
 ---@param upstream? string
 function M.create(path, branch, upstream)
-    -- if upstream == nil then
-    --     if Git.has_origin() then
-    --         upstream = 'origin'
-    --     end
-    -- end
-
-    -- M.setup_git_info()
+    local schedule = function(_path, _branch, _found_branch, _upstream, _found_upstream)
+        local create_wt_job = Git.create_worktree_job(_path, _branch, _found_branch, _upstream, _found_upstream)
+        create_wt_job:after_success(function()
+            vim.schedule(function()
+                Hooks.emit(Hooks.type.CREATE, path, branch, upstream)
+                M.switch(path)
+            end)
+        end)
+        create_wt_job:start()
+    end
 
     Git.has_worktree(path, branch, function(found)
         if found then
@@ -115,44 +118,28 @@ function M.create(path, branch, upstream)
 
         if branch == '' then
             -- detached head
-            local create_wt_job = Git.create_worktree_job(path, nil, false, nil, false)
-            create_wt_job:after(function()
-                vim.schedule(function()
-                    Hooks.emit(Hooks.type.CREATE, path, branch, upstream)
-                    M.switch(path)
-                end)
-            end)
-            create_wt_job:start()
+            schedule(path, nil, false, nil, false)
             return
         end
 
-        Git.has_branch(branch, { '--remotes' }, function(found_remote_branch)
-            Log.debug('Found remote branch %s? %s', branch, found_remote_branch)
-            if found_remote_branch then
-                upstream = branch
-                branch = 'local/' .. branch
+        if upstream == nil then
+            Git.has_branch(branch, nil, function(found_branch)
+                schedule(path, branch, found_branch, nil, false)
+            end)
+            return
+        end
+
+        Git.has_branch(upstream, { '--all' }, function(found_upstream)
+            if found_upstream and branch == upstream then
+                -- if a remote branch, default to `basename $branch` like git does
+                branch = branch:match('([^/]+)$')
             end
             Git.has_branch(branch, nil, function(found_branch)
-                Log.debug('Found branch %s? %s', branch, found_branch)
-                Git.has_branch(upstream, { '--all' }, function(found_upstream)
-                    Log.debug('Found upstream %s? %s', upstream, found_upstream)
-
-                    local create_wt_job = Git.create_worktree_job(path, branch, found_branch, upstream, found_upstream)
-
-                    if found_branch and found_upstream and branch ~= upstream then
-                        local set_remote = Git.setbranch_job(path, branch, upstream)
-                        create_wt_job:and_then_on_success(set_remote)
-                    end
-
-                    create_wt_job:after(function()
-                        vim.schedule(function()
-                            Hooks.emit(Hooks.type.CREATE, path, branch, upstream)
-                            M.switch(path)
-                        end)
-                    end)
-
-                    create_wt_job:start()
-                end)
+                if found_upstream and found_branch then
+                    Log.error('Branch "%s" already exists', branch)
+                    return
+                end
+                schedule(path, branch, found_branch, upstream, found_upstream)
             end)
         end)
     end)
