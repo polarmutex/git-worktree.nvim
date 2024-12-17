@@ -156,7 +156,7 @@ local create_input_prompt = function(opts, cb)
     local re = string.format('git branch --remotes --list %s', opts.branch)
     local remote_branch = vim.fn.systemlist(re)
     if #remote_branch == 1 then
-        cb(path, nil)
+        cb(path, opts.branch)
         return
     end
 
@@ -188,6 +188,9 @@ local telescope_create_worktree = function(opts)
         -- if current_line is still not enough to filter everything but user
         -- still wants to use it as the new branch name, without selecting anything
         local branch = action_state.get_current_line()
+        -- if branch == "" then
+        --     TODO:detached head should list tags
+        -- end
         actions.close(prompt_bufnr)
         opts.branch = branch
         create_input_prompt(opts, function(path, upstream)
