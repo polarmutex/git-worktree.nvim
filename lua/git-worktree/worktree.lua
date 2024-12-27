@@ -169,7 +169,7 @@ function M.delete(path, force, opts)
         opts = {}
     end
 
-    local branch = Git.parse_head(path)
+    local branch = Git.current_branch(path)
 
     Git.has_worktree(path, nil, function(found)
         if not found then
