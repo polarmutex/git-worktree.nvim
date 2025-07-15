@@ -86,8 +86,9 @@ end
 ---@param branch string
 ---@param upstream? string
 function M.create(path, branch, upstream)
-    local schedule = function(_path, _branch, _found_branch, _upstream, _found_upstream)
-        local create_wt_job = Git.create_worktree_job(_path, _branch, _found_branch, _upstream, _found_upstream)
+    local schedule = function(work_path, work_branch, found_branch, work_upstream, found_upstream)
+        local create_wt_job =
+            Git.create_worktree_job(work_path, work_branch, found_branch, work_upstream, found_upstream)
         create_wt_job:after_success(function()
             vim.schedule(function()
                 Hooks.emit(Hooks.type.CREATE, path, branch, upstream)

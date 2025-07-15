@@ -140,7 +140,7 @@ end
 
 local finder = function(opts, ctx)
     local args = { 'worktree', 'list' }
-    local cwd = svim.fs.normalize(opts and opts.cwd or uv.cwd() or '.') or nil
+    local cwd = vim.fs.normalize(opts and opts.cwd or uv.cwd() or '.') or nil
     cwd = Snacks.git.get_root(cwd)
     local current = Git.toplevel_dir()
     return require('snacks.picker.source.proc').proc({
@@ -165,7 +165,7 @@ local finder = function(opts, ctx)
     }, ctx)
 end
 
-local format = function(item, picker)
+local format = function(item, _)
     local a = Snacks.picker.util.align
     local ret = {} ---@type snacks.picker.Highlight[]
     if item.current then

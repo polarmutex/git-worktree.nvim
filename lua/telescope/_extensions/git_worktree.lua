@@ -294,12 +294,12 @@ local telescope_git_worktree = function(opts)
         },
     }
 
-    local make_display = function(entry)
-        local path, _ = utils.transform_path(opts, entry.path)
+    local make_display = function(item)
+        local path, _ = utils.transform_path(opts, item.path)
         return displayer {
-            { entry.branch, 'TelescopeResultsIdentifier' },
+            { item.branch, 'TelescopeResultsIdentifier' },
             { path },
-            { entry.sha },
+            { item.sha },
         }
     end
 
@@ -308,11 +308,11 @@ local telescope_git_worktree = function(opts)
             prompt_title = 'Git Worktrees',
             finder = finders.new_table {
                 results = results,
-                entry_maker = function(entry)
-                    entry.value = entry.branch
-                    entry.ordinal = entry.branch
-                    entry.display = make_display
-                    return entry
+                entry_maker = function(item)
+                    item.value = item.branch
+                    item.ordinal = item.branch
+                    item.display = make_display
+                    return item
                 end,
             },
             sorter = conf.generic_sorter(opts),
