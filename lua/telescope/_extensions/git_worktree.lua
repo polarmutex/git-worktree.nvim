@@ -240,15 +240,27 @@ local telescope_git_worktree = function(opts)
         branch = 0,
     }
 
-    -- if within a worktree, the base repo dir is seen
-    -- as the main worktree with a sha but should not be shown
-    local root = Git.gitroot_dir()
+    -- Check if repository is bare
+    local is_bare_output = utils.get_os_command_output { 'git', 'rev-parse', '--is-bare-repository' }
+    local is_bare = is_bare_output[1] == 'true'
+
+    -- Only filter out the root directory for bare repositories
+    -- For non-bare repositories, we want to show all worktrees including the main one
+    local root = nil
+    if is_bare then
+        root = Git.gitroot_dir()
+    end
 
     local entry = {}
     local index = 1
     for _, line in ipairs(output) do
         if line == '' and entry.sha ~= nil then
-            if entry.path ~= root then
+            local should_include = true
+            if is_bare and root and entry.path == root then
+                should_include = false
+            end
+
+            if should_include then
                 for key, val in pairs(widths) do
                     if key == 'path' then
                         local path_len = strings.strdisplaywidth(entry[key] or '')
