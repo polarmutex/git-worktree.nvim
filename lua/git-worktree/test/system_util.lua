@@ -1,4 +1,5 @@
 local M = {}
+local uv = vim.uv or vim.loop
 
 ---Runs a system command and errors if it fails
 ---@param cmd string | table Command to be ran
@@ -18,7 +19,7 @@ function M.run(cmd, ignore_err, error_msg)
 end
 
 local function is_macos()
-    return vim.loop.os_uname().sysname == 'Darwin'
+    return uv.os_uname().sysname == 'Darwin'
 end
 
 ---Create a temporary directory for use

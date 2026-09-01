@@ -1,6 +1,7 @@
 local Job = require('plenary.job')
 local Path = require('plenary.path')
 local Log = require('git-worktree.logger')
+local uv = vim.uv or vim.loop
 
 ---@class GitWorktreeGitOps
 local M = {}
@@ -16,12 +17,12 @@ function M.has_worktree(path_str, branch, cb)
     local path
 
     if path_str == '.' then
-        path_str = vim.loop.cwd()
+        path_str = uv.cwd()
     end
 
     path = Path:new(path_str)
     if not path:is_absolute() then
-        path = Path:new(string.format('%s' .. Path.path.sep .. '%s', vim.loop.cwd(), path_str))
+        path = Path:new(string.format('%s' .. Path.path.sep .. '%s', uv.cwd(), path_str))
     end
     path = path:absolute()
 
@@ -47,7 +48,7 @@ function M.has_worktree(path_str, branch, cb)
                 end
             end
         end,
-        cwd = vim.loop.cwd(),
+        cwd = uv.cwd(),
     }
 
     job:after(function()
@@ -64,7 +65,7 @@ function M.gitroot_dir()
     local job = Job:new {
         command = 'git',
         args = { 'rev-parse', '--path-format=absolute', '--git-common-dir' },
-        cwd = vim.loop.cwd(),
+        cwd = uv.cwd(),
         on_stderr = function(_, data)
             Log.error('ERROR: ' .. data)
         end,
@@ -90,7 +91,7 @@ function M.toplevel_dir()
     local job = Job:new {
         command = 'git',
         args = { 'rev-parse', '--path-format=absolute', '--show-toplevel' },
-        cwd = vim.loop.cwd(),
+        cwd = uv.cwd(),
         on_stderr = function(_, data)
             Log.error('ERROR: ' .. data)
         end,
@@ -125,7 +126,7 @@ function M.has_branch(branch, opts, cb)
         on_stdout = function(_, data)
             found = found or data == branch
         end,
-        cwd = vim.loop.cwd(),
+        cwd = uv.cwd(),
     }
 
     -- TODO: I really don't want status's spread everywhere... seems bad
@@ -166,7 +167,7 @@ function M.create_worktree_job(path, branch, found_branch, upstream, found_upstr
     return Job:new {
         command = worktree_add_cmd,
         args = worktree_add_args,
-        cwd = vim.loop.cwd(),
+        cwd = uv.cwd(),
         on_start = function()
             Log.debug(worktree_add_cmd .. ' ' .. table.concat(worktree_add_args, ' '))
         end,
@@ -187,7 +188,7 @@ function M.delete_worktree_job(path, force)
     return Job:new {
         command = worktree_del_cmd,
         args = worktree_del_args,
-        cwd = vim.loop.cwd(),
+        cwd = uv.cwd(),
         on_start = function()
             Log.debug(worktree_del_cmd .. ' ' .. table.concat(worktree_del_args, ' '))
         end,
