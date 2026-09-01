@@ -1,6 +1,7 @@
 local git_harness = require('git-worktree.test.git_util')
 local Hooks = require('git-worktree.hooks')
 local Path = require('plenary.path')
+local uv = vim.uv or vim.loop
 
 local cwd = vim.fn.getcwd()
 
@@ -51,7 +52,7 @@ describe('[Worktree]', function()
                     return completed_switch
                 end, 1000)
 
-                assert.are.same(expected_path, vim.loop.cwd())
+                assert.are.same(expected_path, uv.cwd())
             end)
         end)
 
@@ -71,7 +72,7 @@ describe('[Worktree]', function()
                 end, 1000)
 
                 -- Check to make sure directory was switched
-                assert.are.same(expected_path, vim.loop.cwd())
+                assert.are.same(expected_path, uv.cwd())
             end)
         end)
     end)
@@ -94,7 +95,7 @@ describe('[Worktree]', function()
                 end, 1000)
 
                 -- Check to make sure directory was switched
-                assert.are.same(expected_path, vim.loop.cwd())
+                assert.are.same(expected_path, uv.cwd())
             end)
         end)
         describe('[normal repo]', function()
@@ -113,7 +114,7 @@ describe('[Worktree]', function()
                 end, 1000)
 
                 -- Check to make sure directory was switched
-                assert.are.same(expected_path, vim.loop.cwd())
+                assert.are.same(expected_path, uv.cwd())
             end)
         end)
     end)
@@ -134,7 +135,7 @@ describe('[Worktree]', function()
                 end, 1000)
 
                 -- Check to make sure directory was switched
-                assert.are.same(master_dir, vim.loop.cwd())
+                assert.are.same(master_dir, uv.cwd())
             end)
         end)
         describe('[normal repo]', function()
@@ -151,7 +152,7 @@ describe('[Worktree]', function()
                 end, 1000)
 
                 -- Check to make sure directory was switched
-                assert.are.same(master_dir, vim.loop.cwd())
+                assert.are.same(master_dir, uv.cwd())
             end)
         end)
     end)

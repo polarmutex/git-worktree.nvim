@@ -1,6 +1,7 @@
 ---@mod git-worktree.hooks hooks
 
 local M = {}
+local uv = vim.uv or vim.loop
 
 ---@enum git-worktree.hooks.type
 M.type = {
@@ -68,7 +69,7 @@ M.builtins = {
             return
         end
 
-        local cwd = vim.loop.cwd()
+        local cwd = uv.cwd()
         local current_buf_name = vim.api.nvim_buf_get_name(0)
         if not current_buf_name or current_buf_name == '' then
             update_cmd()

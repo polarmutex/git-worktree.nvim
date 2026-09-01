@@ -1,4 +1,5 @@
 local Path = require('plenary.path')
+local uv = vim.uv or vim.loop
 
 local Git = require('git-worktree.git')
 local Log = require('git-worktree.logger')
@@ -9,7 +10,7 @@ local function get_absolute_path(path)
     if Path:new(path):is_absolute() then
         return path
     else
-        return Path:new(vim.loop.cwd(), path):absolute()
+        return Path:new(uv.cwd(), path):absolute()
     end
 end
 
@@ -25,7 +26,7 @@ local function change_dirs(path)
 
     Log.info('changing dirs:  %s ', path)
     local worktree_path = get_absolute_path(path)
-    local previous_worktree = vim.loop.cwd()
+    local previous_worktree = uv.cwd()
     Config = require('git-worktree.config')
 
     -- vim.loop.chdir(worktree_path)
@@ -75,7 +76,7 @@ function M.switch(path)
     if path == nil then
         change_dirs(path)
     else
-        if path == vim.loop.cwd() then
+        if path == uv.cwd() then
             return
         end
         Git.has_worktree(path, nil, function(found)
@@ -194,7 +195,7 @@ function M.delete(path, force, opts)
                 opts.on_failure(e)
             end
 
-            failure(delete.cmd, vim.loop.cwd())(e)
+            failure(delete.cmd, uv.cwd())(e)
         end)
         Log.info('delete start job')
         delete:start()
